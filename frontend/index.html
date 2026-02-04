@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitHub Security Scanner | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <h1>GitSec</h1>
+            </div>
+            
+            <div class="nav-items">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="scan">
+                    <i class="fas fa-search"></i>
+                    <span>New Scan</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="history">
+                    <i class="fas fa-history"></i>
+                    <span>Scan History</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="patterns">
+                    <i class="fas fa-list"></i>
+                    <span>Detection Patterns</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="connection-status" id="connectionStatus">
+                    <i class="fas fa-circle"></i>
+                    <span>Connecting...</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <h2 id="pageTitle">Dashboard</h2>
+                </div>
+                <div class="header-right">
+                    <button class="btn-icon" id="notificationsBtn" title="Notifications">
+                        <i class="fas fa-bell"></i>
+                        <span class="badge" id="notificationBadge">0</span>
+                    </button>
+                    <button class="btn-icon" id="soundToggle" title="Toggle Sound">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content Sections -->
+            <div class="content-section active" id="dashboardSection">
+                <!-- Dashboard content will be loaded here -->
+                <div class="welcome-card">
+                    <div class="welcome-content">
+                        <h3><i class="fas fa-shield-alt"></i> GitHub Security Scanner</h3>
+                        <p>Scan GitHub organizations and users for exposed secrets and vulnerable cloud buckets</p>
+                    </div>
+                    <button class="btn-primary" id="startScanBtn">
+                        <i class="fas fa-play"></i> Start New Scan
+                    </button>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-database"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="totalScans">0</h3>
+                            <p>Total Scans</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-key"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="secretsFound">0</h3>
+                            <p>Secrets Found</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-bucket"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="bucketsFound">0</h3>
+                            <p>Buckets Found</p>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <h3 id="vulnerableBuckets">0</h3>
+                            <p>Vulnerable Buckets</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-clock"></i> Recent Scans</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Target</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Secrets</th>
+                                    <th>Buckets</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentScansTable">
+                                <!-- Will be populated by JavaScript -->
+                                <tr>
+                                    <td colspan="8" class="empty-state">
+                                        <i class="fas fa-search"></i>
+                                        <p>No scans yet. Start your first scan!</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- New Scan Section -->
+            <div class="content-section" id="scanSection">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-search"></i> New Security Scan</h3>
+                    </div>
+                    
+                    <form id="scanForm" class="scan-form">
+                        <div class="form-group">
+                            <label for="orgName">
+                                <i class="fas fa-user"></i> GitHub Organization/Username
+                            </label>
+                            <input type="text" id="orgName" placeholder="e.g., facebook or torvalds" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="scanType">
+                                <i class="fas fa-filter"></i> Repository Type to Scan
+                            </label>
+                            <select id="scanType">
+                                <option value="public">Public Repositories</option>
+                                <option value="private">Private Repositories</option>
+                                <option value="all">All Repositories</option>
+                                <option value="forked">Forked Repositories</option>
+                                <option value="archived">Archived Repositories</option>
+                                <option value="source">Source Repositories Only</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group checkbox-group">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="includeBuckets" checked>
+                                <span class="checkmark"></span>
+                                <span class="checkbox-label">
+                                    <i class="fas fa-cloud"></i> Include Cloud Bucket Vulnerability Check
+                                </span>
+                            </label>
+                            <p class="checkbox-description">
+                                Scan for AWS S3, Google Cloud, Azure, and DigitalOcean buckets and check for takeover vulnerabilities
+                            </p>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary btn-lg">
+                                <i class="fas fa-play"></i> Start Scan
+                            </button>
+                            <button type="button" class="btn-secondary" id="resetForm">
+                                <i class="fas fa-redo"></i> Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Active Scans -->
+                <div class="section-card" id="activeScansCard" style="display: none;">
+                    <div class="section-header">
+                        <h3><i class="fas fa-spinner fa-spin"></i> Active Scans</h3>
+                    </div>
+                    <div id="activeScansContainer">
+                        <!-- Active scans will be inserted here -->
+                    </div>
+                </div>
+
+                <!-- Scan Results -->
+                <div class="section-card" id="scanResultsCard" style="display: none;">
+                    <div class="section-header">
+                        <h3><i class="fas fa-chart-bar"></i> Scan Results</h3>
+                        <button class="btn-icon" id="copyResultsBtn" title="Copy Results">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Scan Summary -->
+                    <div class="scan-summary" id="scanSummary">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                    
+                    <!-- Tabs for Results -->
+                    <div class="results-tabs">
+                        <div class="tab-buttons">
+                            <button class="tab-btn active" data-tab="secrets">Secrets Found</button>
+                            <button class="tab-btn" data-tab="buckets">Bucket Scan Results</button>
+                        </div>
+                        
+                        <!-- Secrets Tab -->
+                        <div class="tab-content active" id="secretsTab">
+                            <div class="severity-filters">
+                                <button class="severity-btn active" data-severity="all">All</button>
+                                <button class="severity-btn critical" data-severity="critical">
+                                    <i class="fas fa-skull-crossbones"></i> Critical
+                                </button>
+                                <button class="severity-btn high" data-severity="high">
+                                    <i class="fas fa-exclamation-circle"></i> High
+                                </button>
+                                <button class="severity-btn medium" data-severity="medium">
+                                    <i class="fas fa-exclamation-triangle"></i> Medium
+                                </button>
+                            </div>
+                            
+                            <div class="table-container">
+                                <table class="data-table" id="secretsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Severity</th>
+                                            <th>Repository</th>
+                                            <th>File</th>
+                                            <th>Line</th>
+                                            <th>Value</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="empty-row">
+                                            <td colspan="7" class="empty-state">
+                                                <i class="fas fa-key"></i>
+                                                <p>No secrets found yet</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Buckets Tab -->
+                        <div class="tab-content" id="bucketsTab">
+                            <div class="table-container">
+                                <table class="data-table" id="bucketsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Status</th>
+                                            <th>Bucket URL</th>
+                                            <th>Type</th>
+                                            <th>Response</th>
+                                            <th>Time</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="empty-row">
+                                            <td colspan="6" class="empty-state">
+                                                <i class="fas fa-cloud"></i>
+                                                <p>No bucket scan results yet</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- History Section -->
+            <div class="content-section" id="historySection">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-history"></i> Scan History</h3>
+                        <button class="btn-danger" id="deleteAllHistoryBtn">
+                            <i class="fas fa-trash"></i> Delete All History
+                        </button>
+                    </div>
+                    
+                    <div class="history-filters">
+                        <input type="text" id="historySearch" placeholder="Search by organization or username...">
+                        <select id="historyStatusFilter">
+                            <option value="all">All Status</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="running">Running</option>
+                        </select>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table" id="historyTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Target</th>
+                                    <th>Type</th>
+                                    <th>Status</th>
+                                    <th>Secrets</th>
+                                    <th>Buckets</th>
+                                    <th>Start Time</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td colspan="8" class="empty-state">
+                                        <i class="fas fa-search"></i>
+                                        <p>No scan history found</p>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patterns Section -->
+            <div class="content-section" id="patternsSection">
+                <div class="section-card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-list"></i> Detection Patterns</h3>
+                    </div>
+                    
+                    <div class="patterns-container">
+                        <div class="pattern-category">
+                            <h4><i class="fas fa-key"></i> Secret Patterns</h4>
+                            <div class="patterns-grid" id="secretPatternsGrid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="pattern-category">
+                            <h4><i class="fas fa-cloud"></i> Bucket Patterns</h4>
+                            <div class="patterns-grid" id="bucketPatternsGrid">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Modal for Detailed View -->
+        <div class="modal" id="detailModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalTitle">Details</h3>
+                    <button class="btn-icon close-modal">&times;</button>
+                </div>
+                <div class="modal-body" id="modalBody">
+                    <!-- Content will be inserted here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Confirmation Modal -->
+        <div class="modal" id="confirmModal">
+            <div class="modal-content confirm-modal">
+                <div class="modal-header">
+                    <h3><i class="fas fa-exclamation-triangle"></i> Confirmation</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="confirmMessage">Are you sure you want to perform this action?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn-secondary" id="confirmCancel">Cancel</button>
+                    <button class="btn-danger" id="confirmOk">Confirm</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Panel -->
+        <div class="notifications-panel" id="notificationsPanel">
+            <div class="notifications-header">
+                <h3><i class="fas fa-bell"></i> Notifications</h3>
+                <button class="btn-icon" id="clearNotificationsBtn" title="Clear All">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+            <div class="notifications-list" id="notificationsList">
+                <!-- Notifications will be inserted here -->
+                <div class="notification-empty">
+                    <i class="fas fa-bell-slash"></i>
+                    <p>No notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Notification -->
+        <div class="toast" id="toast">
+            <div class="toast-content">
+                <i class="fas fa-check-circle"></i>
+                <span id="toastMessage">Operation completed successfully</span>
+            </div>
+        </div>
+
+        <!-- Audio for notifications -->
+        <audio id="beepSound" preload="auto">
+            <source src="sounds/beep.mp3" type="audio/mpeg">
+        </audio>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
